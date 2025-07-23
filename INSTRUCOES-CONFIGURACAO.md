@@ -1,6 +1,3 @@
-# Instruções de Configuração - DCA Bitcoin com Autenticação
-
-
 ### 1. Criar Projeto no Supabase
 
 1. Acesse [supabase.com](https://supabase.com) e faça login
