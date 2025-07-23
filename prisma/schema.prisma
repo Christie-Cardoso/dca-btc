@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamento com contribuições
+  contributions Contribution[]
+
+  @@map("users")
+}
+
+model Contribution {
+  id                 String   @id @default(cuid())
+  userId             String
+  coin               String   // "bitcoin" ou "ethereum"
+  coinPrice          Float    // Preço da moeda no momento da compra
+  contributionAmount Float    // Valor aportado em USD
+  coinQuantity       Float    // Quantidade de moedas compradas
+  date               DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relacionamento com usuário
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("contributions")
+}
+
+model CryptoPrice {
+  id        String   @id @default(cuid())
+  coin      String   @unique // "bitcoin" ou "ethereum"
+  price     Float    // Preço atual
+  updatedAt DateTime @updatedAt
+
+  @@map("crypto_prices")
+}
+
