@@ -1,11 +1,5 @@
 # Instruções de Configuração - DCA Bitcoin com Autenticação
 
-## Pré-requisitos
-
-1. **Conta no Supabase**: Crie uma conta em [supabase.com](https://supabase.com)
-2. **Projeto no Google Cloud Console**: Para configurar OAuth do Google
-
-## Configuração do Supabase
 
 ### 1. Criar Projeto no Supabase
 
