@@ -4,14 +4,6 @@ import { createClient } from '@/utils/supabase/middleware'
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request)
 
-  // Processa o código de autenticação retornado pelo OAuth
-  const code = request.nextUrl.searchParams.get('code')
-  if (code) {
-    await supabase.auth.exchangeCodeForSession(code)
-  }
-
-  await supabase.auth.getUser()
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
