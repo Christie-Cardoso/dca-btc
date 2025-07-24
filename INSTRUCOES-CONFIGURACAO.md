@@ -1,4 +1,4 @@
-### 1. Criar Projeto no Supabase
+## 1. Criar Projeto no Supabase
 
 1. Acesse [supabase.com](https://supabase.com) e faça login
 2. Clique em "New Project"
