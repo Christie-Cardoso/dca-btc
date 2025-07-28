@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -47,9 +48,10 @@ export default function HomePage() {
   const supabase = createClient();
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [currentPrices, setCurrentPrices] = useState<Record<Coin, number> | null>(
-    null
-  );
+  const [currentPrices, setCurrentPrices] = useState<Record<
+    Coin,
+    number
+  > | null>(null);
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -234,10 +236,12 @@ export default function HomePage() {
           </div>
           <div className="flex items-center space-x-2">
             {user?.user_metadata?.avatar_url && (
-              <img
+              <Image
                 src={user.user_metadata.avatar_url}
                 alt="Avatar"
-                className="w-8 h-8 rounded-full"
+                width={32} // ajustar conforme necessário
+                height={32}
+                className="rounded-full"
               />
             )}
             <Button
@@ -290,8 +294,12 @@ export default function HomePage() {
                 <tbody>
                   {Object.keys(summary).length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                        Nenhuma criptomoeda encontrada. Adicione seu primeiro aporte!
+                      <td
+                        colSpan={8}
+                        className="p-8 text-center text-muted-foreground"
+                      >
+                        Nenhuma criptomoeda encontrada. Adicione seu primeiro
+                        aporte!
                       </td>
                     </tr>
                   ) : (
@@ -305,7 +313,9 @@ export default function HomePage() {
                           <div className="flex items-center space-x-3">
                             <div
                               className={`w-8 h-8 ${
-                                data.symbol === "BTC" ? "bg-orange-500" : "bg-blue-500"
+                                data.symbol === "BTC"
+                                  ? "bg-orange-500"
+                                  : "bg-blue-500"
                               } rounded-full flex items-center justify-center`}
                             >
                               <span className="text-white text-sm font-bold">
@@ -314,19 +324,33 @@ export default function HomePage() {
                             </div>
                             <div>
                               <p className="font-medium">{data.name}</p>
-                              <p className="text-sm text-muted-foreground">{data.symbol}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {data.symbol}
+                              </p>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 font-medium">{formatCurrency(data.balance)}</td>
-                        <td className="p-4 font-medium">{formatCurrency(data.currentPrice)}</td>
-                        <td className="p-4 font-medium">{data.totalCoins.toFixed(8)}</td>
-                        <td className="p-4 font-medium">{formatCurrency(data.totalContributions)}</td>
-                        <td className="p-4 font-medium">{formatCurrency(data.averagePrice)}</td>
+                        <td className="p-4 font-medium">
+                          {formatCurrency(data.balance)}
+                        </td>
+                        <td className="p-4 font-medium">
+                          {formatCurrency(data.currentPrice)}
+                        </td>
+                        <td className="p-4 font-medium">
+                          {data.totalCoins.toFixed(8)}
+                        </td>
+                        <td className="p-4 font-medium">
+                          {formatCurrency(data.totalContributions)}
+                        </td>
+                        <td className="p-4 font-medium">
+                          {formatCurrency(data.averagePrice)}
+                        </td>
                         <td className="p-4">
                           <div
                             className={`flex items-center space-x-1 font-medium ${
-                              data.profit >= 0 ? "text-green-500" : "text-red-500"
+                              data.profit >= 0
+                                ? "text-green-500"
+                                : "text-red-500"
                             }`}
                           >
                             <span>{formatCurrency(data.profit)}</span>
@@ -340,10 +364,14 @@ export default function HomePage() {
                         <td className="p-4">
                           <div
                             className={`flex items-center space-x-1 font-medium ${
-                              data.profitPercentage >= 0 ? "text-green-500" : "text-red-500"
+                              data.profitPercentage >= 0
+                                ? "text-green-500"
+                                : "text-red-500"
                             }`}
                           >
-                            <span>{formatPercentage(data.profitPercentage)}</span>
+                            <span>
+                              {formatPercentage(data.profitPercentage)}
+                            </span>
                             {data.profitPercentage >= 0 ? (
                               <TrendingUp className="h-4 w-4" />
                             ) : (
