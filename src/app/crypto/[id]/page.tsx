@@ -52,7 +52,7 @@ const COIN_METADATA: Record<
 export default function CryptoDetail() {
   const router = useRouter();
   const params = useParams();
-  const cryptoId = params.id as Coin; // Garantimos que o ID é do tipo Coin
+  const cryptoId = params.id as Coin;
   const supabase = createClient();
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
@@ -60,11 +60,10 @@ export default function CryptoDetail() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 3. useEffect para carregar todos os dados necessários ao iniciar
   useEffect(() => {
     const initializeData = async () => {
       if (!cryptoId || !Object.keys(COIN_METADATA).includes(cryptoId)) {
-        router.push("/"); // Redireciona se a moeda for inválida
+        router.push("/");
         return;
       }
 
@@ -78,7 +77,6 @@ export default function CryptoDetail() {
       }
       setUser(user);
 
-      // Carrega os aportes e o preço da moeda em paralelo
       await Promise.all([loadContributions(cryptoId), fetchPrice(cryptoId)]);
 
       setLoading(false);
@@ -102,7 +100,6 @@ export default function CryptoDetail() {
     }
   };
 
-  // 4. Função para buscar o preço atual da moeda específica em BRL
   const fetchPrice = async (coinId: Coin) => {
     try {
       const response = await fetch(
@@ -112,11 +109,10 @@ export default function CryptoDetail() {
       setCurrentPrice(data[coinId]?.brl || 0);
     } catch (error) {
       console.error("Erro ao buscar preço:", error);
-      setCurrentPrice(0); // Define 0 em caso de erro
+      setCurrentPrice(0);
     }
   };
 
-  // 5. useMemo para calcular os dados da cripto de forma otimizada
   const cryptoData: CryptoData | null = useMemo(() => {
     if (contributions.length === 0 || currentPrice === null) {
       return null;
@@ -148,7 +144,6 @@ export default function CryptoDetail() {
     };
   }, [contributions, currentPrice, cryptoId]);
 
-  // 6. Funções de formatação ajustadas para BRL
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -159,11 +154,50 @@ export default function CryptoDetail() {
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
   };
-
+  
+  // ---
+  // ALTERAÇÃO 1: Formato da Data 📅
+  // Removido `timeZone: "UTC"` para que o navegador use o fuso horário local do usuário (ex: Horário de Brasília).
+  // ---
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      timeZone: "UTC",
-    });
+    return new Date(dateString).toLocaleDateString("pt-BR");
+  };
+
+  // ---
+  // ALTERAÇÃO 2: Função para Excluir Aporte 🗑️
+  // Esta função envia uma requisição DELETE para a sua API e atualiza o estado local.
+  // ---
+  const handleDeleteContribution = async (contributionId: string) => {
+    // Adiciona uma confirmação para evitar exclusões acidentais
+    if (!window.confirm("Tem certeza que deseja excluir este aporte?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/contributions`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: contributionId }),
+      });
+
+      if (response.ok) {
+        // Remove o aporte da lista local para atualizar a UI instantaneamente
+        setContributions((prevContributions) =>
+          prevContributions.filter(
+            (contribution) => contribution.id !== contributionId
+          )
+        );
+      } else {
+        const errorData = await response.json();
+        console.error("Falha ao excluir o aporte:", errorData.error);
+        alert("Não foi possível excluir o aporte. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro na requisição de exclusão:", error);
+      alert("Ocorreu um erro. Verifique o console para mais detalhes.");
+    }
   };
 
   if (loading) {
@@ -230,80 +264,80 @@ export default function CryptoDetail() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          {/* Aportes */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Aportes</p>
-              <p className="text-sm font-semibold">
-                {formatCurrency(cryptoData.totalContributions)}
-              </p>
-            </CardContent>
-          </Card>
-          {/* Saldo */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Saldo</p>
-              <p className="text-sm font-semibold">
-                {formatCurrency(cryptoData.balance)}
-              </p>
-            </CardContent>
-          </Card>
-          {/* Qtd. Moedas */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Qtd. Moedas</p>
-              <p className="text-sm font-semibold">
-                {cryptoData.totalCoins.toFixed(8)}
-              </p>
-            </CardContent>
-          </Card>
-          {/* Preço Médio */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Preço Médio</p>
-              <p className="text-sm font-semibold">
-                {formatCurrency(cryptoData.averagePrice)}
-              </p>
-            </CardContent>
-          </Card>
-          {/* Lucro */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Lucro</p>
-              <div
-                className={`flex items-center space-x-1 text-sm font-semibold ${
-                  cryptoData.profit >= 0 ? "text-green-500" : "text-red-500"
-                }`}
-              >
-                {formatCurrency(cryptoData.profit)}
-                {cryptoData.profit >= 0 ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          {/* % Lucro */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">% Lucro</p>
-              <div
-                className={`flex items-center space-x-1 text-sm font-semibold ${
-                  cryptoData.profitPercentage >= 0
-                    ? "text-green-500"
-                    : "text-red-500"
-                }`}
-              >
-                {formatPercentage(cryptoData.profitPercentage)}
-                {cryptoData.profitPercentage >= 0 ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            {/* Aportes */}
+            <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Aportes</p>
+                <p className="text-sm font-semibold">
+                    {formatCurrency(cryptoData.totalContributions)}
+                </p>
+                </CardContent>
+            </Card>
+            {/* Saldo */}
+            <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Saldo</p>
+                <p className="text-sm font-semibold">
+                    {formatCurrency(cryptoData.balance)}
+                </p>
+                </CardContent>
+            </Card>
+            {/* Qtd. Moedas */}
+            <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Qtd. Moedas</p>
+                <p className="text-sm font-semibold">
+                    {cryptoData.totalCoins.toFixed(8)}
+                </p>
+                </CardContent>
+            </Card>
+            {/* Preço Médio */}
+            <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Preço Médio</p>
+                <p className="text-sm font-semibold">
+                    {formatCurrency(cryptoData.averagePrice)}
+                </p>
+                </CardContent>
+            </Card>
+            {/* Lucro */}
+            <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Lucro</p>
+                <div
+                    className={`flex items-center space-x-1 text-sm font-semibold ${
+                    cryptoData.profit >= 0 ? "text-green-500" : "text-red-500"
+                    }`}
+                >
+                    {formatCurrency(cryptoData.profit)}
+                    {cryptoData.profit >= 0 ? (
+                    <TrendingUp className="h-3 w-3" />
+                    ) : (
+                    <TrendingDown className="h-3 w-3" />
+                    )}
+                </div>
+                </CardContent>
+            </Card>
+            {/* % Lucro */}
+            <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">% Lucro</p>
+                <div
+                    className={`flex items-center space-x-1 text-sm font-semibold ${
+                    cryptoData.profitPercentage >= 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                >
+                    {formatPercentage(cryptoData.profitPercentage)}
+                    {cryptoData.profitPercentage >= 0 ? (
+                    <TrendingUp className="h-3 w-3" />
+                    ) : (
+                    <TrendingDown className="h-3 w-3" />
+                    )}
+                </div>
+                </CardContent>
+            </Card>
         </div>
 
         {/* Histórico de Aportes */}
@@ -383,10 +417,16 @@ export default function CryptoDetail() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            {/* ---
+                            // ALTERAÇÃO 3: Adicionando o onClick ao botão de excluir
+                            // --- */}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() =>
+                                handleDeleteContribution(contribution.id)
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

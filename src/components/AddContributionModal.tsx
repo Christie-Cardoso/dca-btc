@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,39 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const AddContributionModal = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
+// Exportando o tipo Coin para manter coerência entre as páginas
+export type Coin = "bitcoin" | "ethereum";
+
+// Tipagem para os dados do formulário
+interface FormData {
+  coin: Coin;
+  coinPrice: string;
+  date: string;
+  contributionAmount: string;
+  coinQuantity: string;
+}
+
+// Tipagem para os dados que o onSave receberá
+export interface NewContributionData {
+  coin: Coin;
+  coinPrice: number;
+  date: string;
+  contributionAmount: number;
+  coinQuantity: number;
+}
+
+type AddContributionModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: NewContributionData) => Promise<void>;
+};
+
+const AddContributionModal = ({
+  isOpen,
+  onClose,
+  onSave,
+}: AddContributionModalProps) => {
+  const [formData, setFormData] = useState<FormData>({
     coin: "bitcoin",
     coinPrice: "",
     date: new Date().toISOString().split("T")[0],
@@ -50,7 +81,7 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
     }
   }, [formData.coin, isOpen]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
 
@@ -71,9 +102,10 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const contribution = {
+
+    const contribution: NewContributionData = {
       coin: formData.coin,
       coinPrice: parseFloat(formData.coinPrice),
       date: formData.date,
@@ -117,7 +149,7 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
             </Label>
             <Select
               value={formData.coin}
-              onValueChange={(value) => handleInputChange("coin", value)}
+              onValueChange={(value) => handleInputChange("coin", value as Coin)}
             >
               <SelectTrigger className="bg-background border-border">
                 <SelectValue placeholder="Selecione" />
@@ -138,7 +170,9 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
               type="number"
               step="0.01"
               value={formData.coinPrice}
-              onChange={(e) => handleInputChange("coinPrice", e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                handleInputChange("coinPrice", e.target.value)
+              }
               className="bg-background border-border text-foreground"
               placeholder="0.00"
               required
@@ -153,7 +187,9 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
               id="date"
               type="date"
               value={formData.date}
-              onChange={(e) => handleInputChange("date", e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                handleInputChange("date", e.target.value)
+              }
               className="bg-background border-border text-foreground"
               required
             />
@@ -168,11 +204,11 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
               type="number"
               step="0.01"
               value={formData.contributionAmount}
-              onChange={(e) =>
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 handleInputChange("contributionAmount", e.target.value)
               }
               className="bg-background border-border text-foreground"
-              placeholder="$0.00"
+              placeholder="R$ 0,00"
               required
             />
           </div>
@@ -186,7 +222,7 @@ const AddContributionModal = ({ isOpen, onClose, onSave }) => {
               type="number"
               step="0.00000001"
               value={formData.coinQuantity}
-              onChange={(e) =>
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 handleInputChange("coinQuantity", e.target.value)
               }
               className="bg-background border-border text-foreground"

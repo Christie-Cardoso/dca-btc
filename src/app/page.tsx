@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Plus, LogOut } from "lucide-react";
-import AddContributionModal from "@/components/AddContributionModal";
+import AddContributionModal, { Coin } from "@/components/AddContributionModal";
 import { createClient } from "@/utils/supabase/client";
-
-type Coin = "bitcoin" | "ethereum";
 
 type Contribution = {
   id: string;
@@ -49,7 +47,9 @@ export default function HomePage() {
   const supabase = createClient();
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [currentPrices, setCurrentPrices] = useState<Record<Coin, number> | null>(null);
+  const [currentPrices, setCurrentPrices] = useState<Record<Coin, number> | null>(
+    null
+  );
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);

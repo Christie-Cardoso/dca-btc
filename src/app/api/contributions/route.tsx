@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "../../../utils/supabase/server";
-import { prisma } from "../../../utils/supabase/prisma"; // Import corrigido
+import { prisma } from "../../../utils/supabase/prisma";
+import { User } from "@supabase/supabase-js";
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -14,7 +15,6 @@ export async function GET(request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    // Buscar contribuições do usuário
     const contributions = await prisma.contribution.findMany({
       where: {
         userId: user.id,
@@ -34,9 +34,9 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient(); // Corrigido: await
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,
@@ -47,9 +47,20 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { coin, coinPrice, contributionAmount, coinQuantity, date } = body;
+    const {
+      coin,
+      coinPrice,
+      contributionAmount,
+      coinQuantity,
+      date,
+    }: {
+      coin: string;
+      coinPrice: string;
+      contributionAmount: string;
+      coinQuantity: string;
+      date?: string;
+    } = body;
 
-    // Validar dados
     if (!coin || !coinPrice || !contributionAmount || !coinQuantity) {
       return NextResponse.json(
         { error: "Dados obrigatórios não fornecidos" },
@@ -57,7 +68,13 @@ export async function POST(request) {
       );
     }
 
-    // Verificar se o usuário existe no banco, se não, criar
+    if (!user.email) {
+      return NextResponse.json(
+        { error: "Email do usuário não disponível" },
+        { status: 400 }
+      );
+    }
+
     let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
     });
@@ -73,7 +90,6 @@ export async function POST(request) {
       });
     }
 
-    // Criar contribuição
     const contribution = await prisma.contribution.create({
       data: {
         userId: user.id,
@@ -88,6 +104,56 @@ export async function POST(request) {
     return NextResponse.json({ contribution });
   } catch (error) {
     console.error("Erro ao criar contribuição:", error);
+    return NextResponse.json(
+      { error: "Erro interno do servidor" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id }: { id: string } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "ID da contribuição não fornecido" },
+        { status: 400 }
+      );
+    }
+
+    const contribution = await prisma.contribution.findUnique({
+      where: {
+        id,
+        userId: user.id,
+      },
+    });
+
+    if (!contribution) {
+      return NextResponse.json(
+        { error: "Contribuição não encontrada ou não pertence ao usuário" },
+        { status: 404 }
+      );
+    }
+
+    await prisma.contribution.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "Contribuição excluída com sucesso" });
+  } catch (error) {
+    console.error("Erro ao excluir contribuição:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
